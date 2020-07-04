@@ -4,3 +4,6 @@
 [submodule "http-parser"]
 	path = http-parser
 	url = https://github.com/nodejs/http-parser.git
+[submodule "CxxUrl"]
+	path = CxxUrl
+	url = https://github.com/chmike/CxxUrl.git
