@@ -64,9 +64,17 @@ protected:
 
     WebSocketState state;
 
+    void send_http_request(std::string path,
+                std::string host, Url::Query& query, const WebSocketHeaders& custom_headers);
+    
+    static void on_write(uv_write_t* req, int status);
 public:
     WebSocket(uv_loop_t* loop, uv_tcp_t* socket);
     ~WebSocket();
+
+    virtual void send_raw(char* str, size_t len);
+
+    WebSocketHeaders custom_headers;
 };
 
 class WebSocketClient : public WebSocket {
@@ -77,7 +85,7 @@ private:
     static void on_getaddrinfo_end(uv_getaddrinfo_t* req, int status,
                 addrinfo* res);
     static void on_connect_end(uv_connect_t* req, int status);
-    
+
     void on_tcp_connect();
 public:
     WebSocketClient(uv_loop_t* loop, uv_tcp_t* socket = nullptr);

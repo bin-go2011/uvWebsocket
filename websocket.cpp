@@ -10,6 +10,67 @@ WebSocket::~WebSocket()
 
 }
 
+void WebSocket::send_http_request(std::string path,
+            std::string host, Url::Query& query, const WebSocketHeaders& custom_headers)
+{
+    std::string final_path = path;
+    if (query.size() > 0) {
+        final_path += "?";
+        for (int i = 0; i < query.size(); i++) {
+            final_path += query[i].key();
+            final_path += "=";
+            final_path += query[i].val();
+            if (query.size() - i > 1) {
+                final_path += "&";
+            }
+        }
+    }
+
+    if (final_path.empty()) {
+        final_path = "/";
+    }
+
+    std::string request =
+        "GET " + final_path + " HTTP/1.1\r\n"
+        "Host: " + host + "\r\n"
+        "Connection: Upgrade\r\n"
+        "Upgrade: websocket\r\n"
+        "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n"
+        "Sec-WebSocket-Version: 13\r\n";
+
+    for (auto&& header : custom_headers) {
+        request += header.first + ": " + header.second + "\r\n";
+    }
+
+    request += "\r\n";
+    send_raw((char*)request.c_str(), request.length());
+}
+
+void WebSocket::send_raw(char * str, size_t len)
+{
+    auto write_req = new uv_write_t{};
+    write_req->data = this;
+
+    uv_buf_t bufs[1];
+    bufs[0].base = str;
+    bufs[0].len = len;
+
+    if (int res = uv_write(write_req, (uv_stream_t*)socket, bufs, 1, on_write)) {
+        throw WebSocketException("failed to write into socket");
+    }
+}
+
+void WebSocket::on_write(uv_write_t * req, int status)
+{
+    auto _this = (WebSocket*)req->data;
+
+    // if (status) {
+    //     _this->close();
+    // }
+
+    delete req;
+}
+
 WebSocketClient::WebSocketClient(uv_loop_t* loop, uv_tcp_t* socket)
 :WebSocket(loop, socket)
 {
@@ -108,5 +169,5 @@ void WebSocketClient::on_connect_end(uv_connect_t * req, int status)
 
 void WebSocketClient::on_tcp_connect()
 {
-
+    send_http_request(path, host, query_params, custom_headers);
 }
