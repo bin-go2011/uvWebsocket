@@ -10,6 +10,21 @@ WebSocket::~WebSocket()
 
 }
 
+void WebSocket::close() 
+{
+    if (state != WebSocketState::kOpen)
+        return;
+
+    state = WebSocketState::kClosing;
+
+    auto sd_req = new uv_shutdown_t{};
+    sd_req->data = this;
+
+    if (int res = uv_shutdown(sd_req, (uv_stream_t*)socket, on_shutdown)) {
+        throw WebSocketException("failed to shutdown the socket");
+    }
+}
+
 void WebSocket::send_http_request(std::string path,
             std::string host, Url::Query& query, const WebSocketHeaders& custom_headers)
 {
@@ -69,6 +84,31 @@ void WebSocket::on_write(uv_write_t * req, int status)
     // }
 
     delete req;
+}
+
+void WebSocket::on_shutdown(uv_shutdown_t * req, int status)
+{
+    auto _this = (WebSocket*)req->data;
+    delete req;
+
+    if (status) {
+        _this->state = WebSocketState::kClosed;
+        // if (_this->on_error)
+        //     _this->on_error(_this, uv_err_name(status), uv_strerror(status));
+        // else
+        //     throw WebSocketException("failed to shutdown the socket");
+        return;
+    }
+
+    uv_close((uv_handle_t*)_this->socket, on_handle_close);
+}
+
+void WebSocket::on_handle_close(uv_handle_t * handle)
+{
+    auto _this = (WebSocket*)handle->data;
+    _this->state = WebSocketState::kClosed;
+    delete handle;
+    _this->socket = nullptr;
 }
 
 WebSocketClient::WebSocketClient(uv_loop_t* loop, uv_tcp_t* socket)
@@ -170,4 +210,54 @@ void WebSocketClient::on_connect_end(uv_connect_t * req, int status)
 void WebSocketClient::on_tcp_connect()
 {
     send_http_request(path, host, query_params, custom_headers);
+
+    if (int res = uv_read_start((uv_stream_t*)socket,
+                on_alloc_callback, on_read_callback)) {
+        throw WebSocketException("failed to start reading");
+    }
+}
+
+void WebSocketClient::on_alloc_callback(uv_handle_t * handle, 
+            size_t suggested_size, uv_buf_t * buf)
+{
+    buf->base = new char[suggested_size];
+    buf->len = suggested_size;
+}
+
+void WebSocketClient::on_read_callback(uv_stream_t * client, 
+            ssize_t nbuf, const uv_buf_t * buf)
+{
+    auto sender = (WebSocketClient*)client->data;
+
+    if (nbuf > 0) {
+        sender->on_tcp_packet(buf->base, nbuf);
+        delete[] buf->base;
+    }
+    else {
+        sender->on_tcp_close(nbuf);
+    }
+}
+
+void WebSocketClient::on_tcp_packet(char * packet, ssize_t len)
+{
+    //if (http_handshake_done) {
+    //    handle_packet(packet, len);
+    //}
+    //else {
+    //    auto res = parse_http_response(packet, len);
+    //    if (res->res) {
+    //        res->end = std::bind(&WebSocketClient::on_response_end, this, res);
+    //        if (res->res < len) {
+    //            enque_fragment(packet + res->res, len - res->res);
+    //        }
+
+    //        if (on_connection)
+    //            on_connection(this, res);
+    //    }
+    //}    
+}
+
+void WebSocketClient::on_tcp_close(int status)
+{
+    close();
 }
