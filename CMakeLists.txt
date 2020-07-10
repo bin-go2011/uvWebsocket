@@ -9,6 +9,7 @@ add_subdirectory(libuv)
 
 add_library(${PROJECT_NAME} 
     websocket.cpp websocket.hpp
+    websocket_client.cpp websocket_client.hpp
     url.cpp url.hpp
 )
 target_link_libraries(${PROJECT_NAME} uv)
