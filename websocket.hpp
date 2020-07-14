@@ -8,6 +8,7 @@
 //#include <http_parser.h>
 #include <uv.h>
 #include "url.hpp"
+#include "http_parser.hpp"
 
 static constexpr char* ws_magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
@@ -37,15 +38,6 @@ struct WebSocketFrame {
     size_t frame_length;
 };
 
-class HttpParser {
-};
-
-class HttpRequest {
-};
-
-class HttpResponse {
-};
-
 class WebSocketException : public std::exception
 {
 private:
@@ -63,19 +55,32 @@ protected:
     uv_loop_t* loop;
 
     WebSocketState state;
+    bool http_handshake_done = false;
 
     void send_http_request(std::string path,
                 std::string host, Url::Query& query, const WebSocketHeaders& custom_headers);
+    HttpResponse* parse_http_response(const char* str, ssize_t len);
     
     static void on_write(uv_write_t* req, int status);
     static void on_shutdown(uv_shutdown_t* req, int status);
     static void on_handle_close(uv_handle_t* handle);
+
+    void enque_fragment(const char* buf, size_t len);
+    void handle_packet(char* buf, size_t len);
+    size_t decode_frame(char* buf, size_t len);
+
+    std::string fragment_buffer;
+    size_t fragment_offset = 0;
 public:
     WebSocket(uv_loop_t* loop, uv_tcp_t* socket);
     ~WebSocket();
 
     virtual void close();
     virtual void send_raw(char* str, size_t len);
+
+    std::function<void(WebSocket*, const char*, const char*)> on_close;
+    std::function<void(WebSocket*, const char*, const char*)> on_error;
+    std::function<void(WebSocket*, char*, size_t, WebSocketOpcode)> on_message;
 
     WebSocketHeaders custom_headers;
 };

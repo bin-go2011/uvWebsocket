@@ -1,5 +1,63 @@
 #include "websocket.hpp"
 
+static uint8_t const BHB0_OPCODE = 0x0F;
+static uint8_t const BHB0_FIN = 0x80;
+
+static uint8_t const BHB1_PAYLOAD = 0x7F;
+static uint8_t const BHB1_MASK = 0x80;
+
+WebSocketFrame WebSocketExtractFrameHeader(const char * source, size_t len)
+{
+    WebSocketFrame res = { 0 };
+    if (len < 2)
+        return { 0 };
+
+    size_t off = 0;
+    uint8_t b = source[off++];
+    if ((b & 112) != 0) {
+        return { 0 };
+    }
+    res.opcode = (WebSocketOpcode)(b & BHB0_OPCODE);
+
+    b = source[off++];
+    res.is_masked = b & BHB1_MASK;
+
+    b &= ~0x80;
+
+    if (b < 126) {
+        res.payload_length = b;
+    }
+    else if (b == 126 && (off + 2 < len)) {
+        res.payload_length = 0;
+        res.payload_length |= (source[off++] & 0xff) << 8;
+        res.payload_length |= source[off++] & 0xff;
+    }
+    else if (b == 127 && (off + 8 < len)) {
+        res.payload_length = 0;
+        res.payload_length |= (source[off++] & 0xff) << 56;
+        res.payload_length |= (source[off++] & 0xff) << 48;
+        res.payload_length |= (source[off++] & 0xff) << 40;
+        res.payload_length |= (source[off++] & 0xff) << 32;
+        res.payload_length |= (source[off++] & 0xff) << 24;
+        res.payload_length |= (source[off++] & 0xff) << 16;
+        res.payload_length |= (source[off++] & 0xff) << 8;
+        res.payload_length |= source[off++] & 0xff;
+    }
+    else {
+        return { 0 };
+    }
+
+    // if (res.is_masked) {
+    //     if (off + 4 >= len)
+    //         return WebSocketFrame{ 0 };
+    //     res.mask = read_uint32(source, len, off);
+    // }
+
+    res.frame_length = off;
+
+    return res;
+}
+
 WebSocket::WebSocket(uv_loop_t * loop, uv_tcp_t * socket)
 :loop(loop), socket(socket), state(WebSocketState::kClosed)
 {
@@ -8,6 +66,23 @@ WebSocket::WebSocket(uv_loop_t * loop, uv_tcp_t * socket)
 WebSocket::~WebSocket()
 {
 
+}
+
+void WebSocket::on_shutdown(uv_shutdown_t * req, int status)
+{
+    auto _this = (WebSocket*)req->data;
+    delete req;
+
+    if (status) {
+        _this->state = WebSocketState::kClosed;
+        // if (_this->on_error)
+        //     _this->on_error(_this, uv_err_name(status), uv_strerror(status));
+        // else
+        //     throw WebSocketException("failed to shutdown the socket");
+        return;
+    }
+
+    uv_close((uv_handle_t*)_this->socket, on_handle_close);
 }
 
 void WebSocket::close() 
@@ -86,23 +161,6 @@ void WebSocket::on_write(uv_write_t * req, int status)
     delete req;
 }
 
-void WebSocket::on_shutdown(uv_shutdown_t * req, int status)
-{
-    auto _this = (WebSocket*)req->data;
-    delete req;
-
-    if (status) {
-        _this->state = WebSocketState::kClosed;
-        // if (_this->on_error)
-        //     _this->on_error(_this, uv_err_name(status), uv_strerror(status));
-        // else
-        //     throw WebSocketException("failed to shutdown the socket");
-        return;
-    }
-
-    uv_close((uv_handle_t*)_this->socket, on_handle_close);
-}
-
 void WebSocket::on_handle_close(uv_handle_t * handle)
 {
     auto _this = (WebSocket*)handle->data;
@@ -111,3 +169,57 @@ void WebSocket::on_handle_close(uv_handle_t * handle)
     _this->socket = nullptr;
 }
 
+HttpResponse* WebSocket::parse_http_response(const char * str, ssize_t len)
+{
+    HttpParser p;
+    HttpResponse* req = new HttpResponse{};
+    bool completed = false;
+
+    p.on_header_field = [&req](const char* cstr, size_t len) {
+        req->header = std::string(cstr, len);
+    };
+    p.on_header_value = [&req](const char* cstr, size_t len) {
+        std::string str(cstr, len);
+        req->headers[req->header] = str;
+    };
+    p.on_url = [&req](const char* cstr, size_t len) {
+        req->url = std::string(cstr, len);
+    };
+    p.on_status = [&req](const char* cstr, size_t len) {
+        req->status = std::string(cstr, len);
+    };
+    p.on_message_complete = [&completed]() {
+        completed = true;
+    };
+
+    auto parsed = p.parse_response(std::string(str, len));
+    req->res = completed ? parsed : 0;
+
+    return req;
+}
+
+void WebSocket::enque_fragment(const char * buf, size_t len)
+{
+    fragment_buffer.append(buf, len);
+}
+
+void WebSocket::handle_packet(char * buf, size_t len)
+{
+    decode_frame(buf, len);
+}
+
+size_t WebSocket::decode_frame(char * buf, size_t len)
+{
+    auto frame = WebSocketExtractFrameHeader(buf, len);
+    if (!frame.payload_length || frame.payload_length > len)
+        return 0;
+
+    // if (frame.is_masked) {
+    //     xor_buffer(buf + frame.frame_length, frame.payload_length, frame.mask);
+    // }
+
+    if (on_message)
+        on_message(this, buf + frame.frame_length, frame.payload_length, frame.opcode);
+
+    return frame.payload_length + frame.frame_length;
+}
