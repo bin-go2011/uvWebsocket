@@ -59,7 +59,6 @@ protected:
 
     void send_http_request(std::string path,
                 std::string host, Url::Query& query, const WebSocketHeaders& custom_headers);
-    HttpResponse* parse_http_response(const char* str, ssize_t len);
     
     static void on_write(uv_write_t* req, int status);
     static void on_shutdown(uv_shutdown_t* req, int status);

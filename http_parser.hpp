@@ -9,6 +9,7 @@ extern "C" {
 }
 
 class HttpParser {
+    friend class HttpResponse;
 private:
     http_parser parser;
     http_parser_settings settings;
@@ -41,12 +42,14 @@ public:
 };
 
 class HttpResponse {
-public:
+private:
+    HttpParser p;
+
     std::map<std::string, std::string> headers;
     std::string header, url, status;
-    size_t res = 0;
-
-    std::function<void()> end;
+public:
+    int parse(const char* str, size_t len);
+    unsigned int status_code() { return p.parser.status_code; }
 };
 
 #endif

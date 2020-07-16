@@ -129,21 +129,23 @@ void WebSocketClient::on_read_callback(uv_stream_t * client,
 
 void WebSocketClient::on_tcp_packet(char * packet, ssize_t len)
 {
-    //if (http_handshake_done) {
-    //    handle_packet(packet, len);
-    //}
-    //else {
-    //    auto res = parse_http_response(packet, len);
-    //    if (res->res) {
-    //        res->end = std::bind(&WebSocketClient::on_response_end, this, res);
-    //        if (res->res < len) {
-    //            enque_fragment(packet + res->res, len - res->res);
-    //        }
+    
+    if (http_handshake_done) {
+       handle_packet(packet, len);
+    }
+    else {
+		HttpResponse resp;
+		size_t nparsed = resp.parse(packet, len);
+        if (nparsed > 0 && resp.status_code() == 101) {
 
-    //        if (on_connection)
-    //            on_connection(this, res);
-    //    }
-    //}    
+            http_handshake_done = true;
+            state = WebSocketState::kOpen;
+
+        //   if (on_connection)
+        //       on_connection(this, res);
+        }
+       
+    }    
 }
 
 void WebSocketClient::on_tcp_close(int status)

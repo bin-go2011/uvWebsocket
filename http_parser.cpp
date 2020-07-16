@@ -90,3 +90,28 @@ size_t HttpParser::parse_response(std::string input)
     return http_parser_execute(&parser, &settings,
         input.data(), input.size());
 }
+
+int HttpResponse::parse(const char* str, size_t len)
+{
+    bool completed = false;
+
+    p.on_header_field = [this](const char* cstr, size_t len) {
+        this->header = std::string(cstr, len);
+    };
+    p.on_header_value = [this](const char* cstr, size_t len) {
+        std::string str(cstr, len);
+        this->headers[this->header] = str;
+    };
+    p.on_url = [this](const char* cstr, size_t len) {
+        this->url = std::string(cstr, len);
+    };
+    p.on_status = [this](const char* cstr, size_t len) {
+        this->status = std::string(cstr, len);
+    };
+    p.on_message_complete = [&completed]() {
+        completed = true;
+    };
+
+    auto parsed = p.parse_response(std::string(str, len));
+    return completed ? parsed : 0;
+}

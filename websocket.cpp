@@ -169,35 +169,6 @@ void WebSocket::on_handle_close(uv_handle_t * handle)
     _this->socket = nullptr;
 }
 
-HttpResponse* WebSocket::parse_http_response(const char * str, ssize_t len)
-{
-    HttpParser p;
-    HttpResponse* req = new HttpResponse{};
-    bool completed = false;
-
-    p.on_header_field = [&req](const char* cstr, size_t len) {
-        req->header = std::string(cstr, len);
-    };
-    p.on_header_value = [&req](const char* cstr, size_t len) {
-        std::string str(cstr, len);
-        req->headers[req->header] = str;
-    };
-    p.on_url = [&req](const char* cstr, size_t len) {
-        req->url = std::string(cstr, len);
-    };
-    p.on_status = [&req](const char* cstr, size_t len) {
-        req->status = std::string(cstr, len);
-    };
-    p.on_message_complete = [&completed]() {
-        completed = true;
-    };
-
-    auto parsed = p.parse_response(std::string(str, len));
-    req->res = completed ? parsed : 0;
-
-    return req;
-}
-
 void WebSocket::enque_fragment(const char * buf, size_t len)
 {
     fragment_buffer.append(buf, len);
