@@ -141,8 +141,8 @@ void WebSocketClient::on_tcp_packet(char * packet, ssize_t len)
             http_handshake_done = true;
             state = WebSocketState::kOpen;
 
-        //   if (on_connection)
-        //       on_connection(this, res);
+          if (on_connection)
+              on_connection(this, resp);
         }
        
     }    

@@ -24,7 +24,7 @@ public:
     void connect(std::string uri);
     void connect(addrinfo* addr);
 
-    std::function<void(WebSocket*, const HttpResponse*)> on_connection;
+    std::function<void(WebSocket*, const HttpResponse&)> on_connection;
 };
 
 #endif
