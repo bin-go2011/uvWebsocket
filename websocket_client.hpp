@@ -1,7 +1,7 @@
 #ifndef WEBSOCKET_CLIENT_HPP_
 #define WEBSOCKET_CLIENT_HPP_
 
-#include "websocket.hpp"
+#include "websocket_base.hpp"
 
 class WebSocketClient : public WebSocket {
 private:

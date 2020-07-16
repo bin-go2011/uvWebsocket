@@ -1,4 +1,4 @@
-#include "websocket.hpp"
+#include "websocket_base.hpp"
 
 static uint8_t const BHB0_OPCODE = 0x0F;
 static uint8_t const BHB0_FIN = 0x80;

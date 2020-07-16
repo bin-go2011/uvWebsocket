@@ -14,9 +14,9 @@ add_library(http_parser
 target_include_directories(http_parser PUBLIC http-parser)
 
 add_library(${PROJECT_NAME} 
-    websocket.cpp websocket.hpp
+    websocket_base.cpp websocket_base.hpp
     websocket_client.cpp websocket_client.hpp
-    http_parser.cpp http_parser.hpp
+    websocket_parser.cpp websocket_parser.hpp
     url.cpp url.hpp
 )
 target_link_libraries(${PROJECT_NAME} uv http_parser)

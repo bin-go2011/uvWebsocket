@@ -8,7 +8,7 @@
 //#include <http_parser.h>
 #include <uv.h>
 #include "url.hpp"
-#include "http_parser.hpp"
+#include "websocket_parser.hpp"
 
 static constexpr char* ws_magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
