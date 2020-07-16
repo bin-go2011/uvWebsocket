@@ -58,6 +58,41 @@ WebSocketFrame WebSocketExtractFrameHeader(const char * source, size_t len)
     return res;
 }
 
+size_t WebSocketCreateFrameHeader(char * dest, size_t dest_len, 
+            WebSocketOpcode opcode, size_t payload_length, char * mask)
+{
+    size_t off = 0;
+
+    dest[off++] = BHB0_FIN | opcode;
+
+    if (payload_length < 126) {
+        dest[off++] = mask == nullptr ? payload_length : payload_length | 0x80;
+    }
+    else if (payload_length < 65536) {
+        dest[off++] = mask == nullptr ? 126 : 126 | 0x80;
+        dest[off++] = (payload_length >> 8) & 0xff;
+        dest[off++] = (payload_length) & 0xff;
+    }
+    else {
+        dest[off++] = mask == nullptr ? 127 : 127 | 0x80;
+        dest[off++] = (payload_length >> 56) & 0xff;
+        dest[off++] = (payload_length >> 48) & 0xff;
+        dest[off++] = (payload_length >> 40) & 0xff;
+        dest[off++] = (payload_length >> 32) & 0xff;
+        dest[off++] = (payload_length >> 24) & 0xff;
+        dest[off++] = (payload_length >> 16) & 0xff;
+        dest[off++] = (payload_length >> 8) & 0xff;
+        dest[off++] = (payload_length) & 0xff;
+    }
+
+    if (mask) {
+        memcpy(dest + off, mask, 4);
+        off += 4;
+    }
+
+    return off;
+}
+
 WebSocket::WebSocket(uv_loop_t * loop, uv_tcp_t * socket)
 :loop(loop), socket(socket), state(WebSocketState::kClosed)
 {
@@ -193,4 +228,23 @@ size_t WebSocket::decode_frame(char * buf, size_t len)
         on_message(this, buf + frame.frame_length, frame.payload_length, frame.opcode);
 
     return frame.payload_length + frame.frame_length;
+}
+
+void WebSocket::send(const char* buf, size_t length, WebSocketOpcode op)
+{
+    if (state != WebSocketState::kOpen)
+        return;
+
+    std::string frame(length + 14, 0);
+    size_t header_length = WebSocketCreateFrameHeader((char*)frame.data(), frame.length(),
+        op, length, nullptr);
+
+    memcpy((char*)frame.data() + header_length, buf, length);
+
+    send_raw((char*)frame.data(), header_length + length);
+}
+
+void WebSocket::send(std::string message, WebSocketOpcode op)
+{
+    send(message.c_str(), message.size(), op);
 }

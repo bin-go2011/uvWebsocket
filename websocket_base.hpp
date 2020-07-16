@@ -82,6 +82,9 @@ public:
     std::function<void(WebSocket*, char*, size_t, WebSocketOpcode)> on_message;
 
     WebSocketHeaders custom_headers;
+
+    void send(std::string message, WebSocketOpcode op = kTextFrame);
+    void send(const char* buf, size_t length, WebSocketOpcode op);
 };
 
 
