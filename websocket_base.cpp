@@ -131,7 +131,7 @@ void WebSocket::close()
     sd_req->data = this;
 
     if (int res = uv_shutdown(sd_req, (uv_stream_t*)socket, on_shutdown)) {
-        throw WebSocketException("failed to shutdown the socket");
+        //throw WebSocketException("failed to shutdown the socket");
     }
 }
 
@@ -181,7 +181,7 @@ void WebSocket::send_raw(char * str, size_t len)
     bufs[0].len = len;
 
     if (int res = uv_write(write_req, (uv_stream_t*)socket, bufs, 1, on_write)) {
-        throw WebSocketException("failed to write into socket");
+        // throw WebSocketException("failed to write into socket");
     }
 }
 

@@ -36,17 +36,6 @@ struct WebSocketFrame {
     size_t frame_length;
 };
 
-class WebSocketException : public std::exception
-{
-private:
-    std::string message;
-public:
-    WebSocketException() 
-        : std::exception() {}
-    WebSocketException(std::string _What)
-        : message(_What), std::exception() {}
-};
-
 class WebSocket {
 protected:
     uv_tcp_t* socket;

@@ -23,7 +23,7 @@ void WebSocketClient::connect(std::string uri)
         socket->data = this;
 
         if (int res = uv_tcp_init(loop, socket)) {
-            throw WebSocketException("failed to init the socket");
+            //throw WebSocketException("failed to init the socket");
         }
     }
 
@@ -40,7 +40,7 @@ void WebSocketClient::connect(std::string uri)
         host.c_str(),
         port.c_str(),
         &hints)) {
-        throw WebSocketException("failed to call getaddrinfo");
+        // throw WebSocketException("failed to call getaddrinfo");
     }
 }
 
@@ -57,7 +57,7 @@ void WebSocketClient::connect(addrinfo * addr)
     if (int res = uv_tcp_connect(connect_req,
         socket, addr->ai_addr, on_connect_end)) {
         printf("connection error: %s\n", uv_strerror(res));
-        throw WebSocketException("failed to connect");
+        // throw WebSocketException("failed to connect");
     }
 }
 
@@ -102,7 +102,7 @@ void WebSocketClient::on_tcp_connect()
 
     if (int res = uv_read_start((uv_stream_t*)socket,
                 on_alloc_callback, on_read_callback)) {
-        throw WebSocketException("failed to start reading");
+        // throw WebSocketException("failed to start reading");
     }
 }
 
