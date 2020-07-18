@@ -34,6 +34,8 @@ public:
 
 class HttpRequest {
 public:
+    HttpRequest();
+    ~HttpRequest();
     std::map<std::string, std::string> headers;
     std::string header, url, status;
     size_t res = 0;
@@ -48,6 +50,8 @@ private:
     std::map<std::string, std::string> headers;
     std::string header, url, status;
 public:
+    HttpResponse();
+    ~HttpResponse();
     int parse(const char* str, size_t len);
     unsigned int status_code() { return p.parser.status_code; }
 };

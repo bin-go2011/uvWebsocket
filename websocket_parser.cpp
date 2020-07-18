@@ -91,6 +91,26 @@ size_t HttpParser::parse_response(std::string input)
         input.data(), input.size());
 }
 
+HttpRequest::HttpRequest()
+{
+
+}
+
+HttpRequest::~HttpRequest()
+{
+
+}
+
+HttpResponse::HttpResponse()
+{
+
+}
+
+HttpResponse::~HttpResponse()
+{
+
+}
+
 int HttpResponse::parse(const char* str, size_t len)
 {
     bool completed = false;

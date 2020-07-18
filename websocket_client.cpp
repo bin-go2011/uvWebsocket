@@ -5,6 +5,11 @@ WebSocketClient::WebSocketClient(uv_loop_t* loop, uv_tcp_t* socket)
 {
 }
 
+WebSocketClient::~WebSocketClient()
+{
+
+}
+
 void WebSocketClient::connect(std::string uri)
 {
     http_parser_url u;

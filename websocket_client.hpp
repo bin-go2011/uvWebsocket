@@ -19,7 +19,8 @@ private:
 
 public:
     WebSocketClient(uv_loop_t* loop, uv_tcp_t* socket = nullptr);
-
+    ~WebSocketClient();
+    
     void connect(std::string uri);
     void connect(addrinfo* addr);
 
