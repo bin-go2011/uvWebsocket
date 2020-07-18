@@ -33,7 +33,7 @@ int main() {
     WebSocketClient ws(loop);
 
     ws.on_connection = [](WebSocket* ws, const HttpResponse& resp) {
-        std::cout << "Connected to " << std::endl;
+        std::cout << "Connected to " << ws->remote_address() << std::endl;
     };
 
     ws.on_message = [](WebSocket* ws, char* data, size_t len, WebSocketOpcode opcode) {
@@ -47,7 +47,9 @@ int main() {
              _mreUUID = root["mreUUID"].asString();
 
              send_register_req(ws);
-		 }
+		 } else if (msg_name == "register_resp") {
+
+         }
     };
 
     ws.connect("ws://10.220.214.47:8089/ipc/ws/1.0/relay");

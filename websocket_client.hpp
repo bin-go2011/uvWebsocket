@@ -5,8 +5,6 @@
 
 class WebSocketClient : public WebSocket {
 private:
-    std::string path, host, port, query;
-
     static void on_getaddrinfo_end(uv_getaddrinfo_t* req, int status,
                 addrinfo* res);
     static void on_connect_end(uv_connect_t* req, int status);
@@ -20,7 +18,7 @@ private:
 public:
     WebSocketClient(uv_loop_t* loop, uv_tcp_t* socket = nullptr);
     ~WebSocketClient();
-    
+
     void connect(std::string uri);
     void connect(addrinfo* addr);
 

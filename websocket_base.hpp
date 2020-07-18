@@ -41,6 +41,8 @@ protected:
 
     WebSocketState state;
     bool http_handshake_done = false;
+    std::string path, host, port, query;
+
 
     void send_http_request(std::string path,
                 std::string host, std::string query, const WebSocketHeaders& custom_headers);
@@ -70,6 +72,8 @@ public:
 
     void send(std::string message, WebSocketOpcode op = kTextFrame);
     void send(const char* buf, size_t length, WebSocketOpcode op);
+
+    std::string remote_address() { return host+":"+port; }
 };
 
 
