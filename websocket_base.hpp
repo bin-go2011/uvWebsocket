@@ -5,9 +5,7 @@
 #include <string>
 #include <stdint.h>
 
-//#include <http_parser.h>
 #include <uv.h>
-#include "url.hpp"
 #include "websocket_parser.hpp"
 
 static constexpr char* ws_magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
@@ -58,7 +56,7 @@ protected:
     bool http_handshake_done = false;
 
     void send_http_request(std::string path,
-                std::string host, Url::Query& query, const WebSocketHeaders& custom_headers);
+                std::string host, std::string query, const WebSocketHeaders& custom_headers);
     
     static void on_write(uv_write_t* req, int status);
     static void on_shutdown(uv_shutdown_t* req, int status);

@@ -17,7 +17,6 @@ add_library(${PROJECT_NAME}
     websocket_base.cpp websocket_base.hpp
     websocket_client.cpp websocket_client.hpp
     websocket_parser.cpp websocket_parser.hpp
-    url.cpp url.hpp
 )
 target_link_libraries(${PROJECT_NAME} uv http_parser)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR})

@@ -5,8 +5,7 @@
 
 class WebSocketClient : public WebSocket {
 private:
-    Url::Query query_params;
-    std::string path, host, port;
+    std::string path, host, port, query;
 
     static void on_getaddrinfo_end(uv_getaddrinfo_t* req, int status,
                 addrinfo* res);

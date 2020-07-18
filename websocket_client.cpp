@@ -7,15 +7,16 @@ WebSocketClient::WebSocketClient(uv_loop_t* loop, uv_tcp_t* socket)
 
 void WebSocketClient::connect(std::string uri)
 {
-    Url u(uri);
-    host = u.host();
-    path = u.path();
-    port = u.port();
+    http_parser_url u;
+    http_parser_url_init(&u);
+    http_parser_parse_url(uri.c_str(), uri.length(), 0, &u);
+    host = uri.substr(u.field_data[UF_HOST].off, u.field_data[UF_HOST].len);
+    path = uri.substr(u.field_data[UF_PATH].off, u.field_data[UF_PATH].len);
+    query = uri.substr(u.field_data[UF_QUERY].off, u.field_data[UF_QUERY].len);
 
+    port = std::to_string(u.port);
     if (port.empty())
         port = "80";
-
-    query_params = u.query();
 
     if (!socket) {
         socket = new uv_tcp_t{};
@@ -32,7 +33,6 @@ void WebSocketClient::connect(std::string uri)
     addrinfo hints = {};
     hints.ai_protocol = IPPROTO_TCP;
     hints.ai_socktype = SOCK_STREAM;
-    hints.ai_family = u.ip_version() == 6 ? AF_INET6 : AF_INET;
 
     if (int res = uv_getaddrinfo(loop,
         getaddrinfo_req,
@@ -98,7 +98,7 @@ void WebSocketClient::on_connect_end(uv_connect_t * req, int status)
 
 void WebSocketClient::on_tcp_connect()
 {
-    send_http_request(path, host, query_params, custom_headers);
+    send_http_request(path, host, query, custom_headers);
 
     if (int res = uv_read_start((uv_stream_t*)socket,
                 on_alloc_callback, on_read_callback)) {

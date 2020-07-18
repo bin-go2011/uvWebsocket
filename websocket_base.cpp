@@ -136,20 +136,20 @@ void WebSocket::close()
 }
 
 void WebSocket::send_http_request(std::string path,
-            std::string host, Url::Query& query, const WebSocketHeaders& custom_headers)
+            std::string host, std::string query, const WebSocketHeaders& custom_headers)
 {
     std::string final_path = path;
-    if (query.size() > 0) {
-        final_path += "?";
-        for (int i = 0; i < query.size(); i++) {
-            final_path += query[i].key();
-            final_path += "=";
-            final_path += query[i].val();
-            if (query.size() - i > 1) {
-                final_path += "&";
-            }
-        }
-    }
+    // if (query.size() > 0) {
+    //     final_path += "?";
+    //     for (int i = 0; i < query.size(); i++) {
+    //         final_path += query[i].key();
+    //         final_path += "=";
+    //         final_path += query[i].val();
+    //         if (query.size() - i > 1) {
+    //             final_path += "&";
+    //         }
+    //     }
+    // }
 
     if (final_path.empty()) {
         final_path = "/";
