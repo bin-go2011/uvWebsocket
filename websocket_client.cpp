@@ -27,7 +27,7 @@ void WebSocketClient::connect(std::string uri)
         }
     }
 
-    auto getaddrinfo_req = new uv_getaddrinfo_t{};
+    uv_getaddrinfo_t* getaddrinfo_req = new uv_getaddrinfo_t{};
     getaddrinfo_req->data = this;
 
     addrinfo hints = {};
@@ -51,7 +51,7 @@ void WebSocketClient::connect(addrinfo * addr)
 
     state = WebSocketState::kOpening;
 
-    auto connect_req = new uv_connect_t{};
+    uv_connect_t* connect_req = new uv_connect_t{};
     connect_req->data = this;
 
     if (int res = uv_tcp_connect(connect_req,
@@ -64,7 +64,7 @@ void WebSocketClient::connect(addrinfo * addr)
 void WebSocketClient::on_getaddrinfo_end(uv_getaddrinfo_t * req,
             int status, addrinfo * res)
 {
-    auto _this = (WebSocketClient*)req->data;
+    WebSocketClient* _this = (WebSocketClient*)req->data;
     delete req;
 
     if (status) {
@@ -81,7 +81,7 @@ void WebSocketClient::on_getaddrinfo_end(uv_getaddrinfo_t * req,
 
 void WebSocketClient::on_connect_end(uv_connect_t * req, int status)
 {
-    auto _this = (WebSocketClient*)req->data;
+    WebSocketClient* _this = (WebSocketClient*)req->data;
     delete req;
 
     if (status) {
@@ -116,7 +116,7 @@ void WebSocketClient::on_alloc_callback(uv_handle_t * handle,
 void WebSocketClient::on_read_callback(uv_stream_t * client, 
             ssize_t nbuf, const uv_buf_t * buf)
 {
-    auto sender = (WebSocketClient*)client->data;
+    WebSocketClient* sender = (WebSocketClient*)client->data;
 
     if (nbuf > 0) {
         sender->on_tcp_packet(buf->base, nbuf);

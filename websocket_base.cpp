@@ -105,7 +105,7 @@ WebSocket::~WebSocket()
 
 void WebSocket::on_shutdown(uv_shutdown_t * req, int status)
 {
-    auto _this = (WebSocket*)req->data;
+    WebSocket* _this = (WebSocket*)req->data;
     delete req;
 
     if (status) {
@@ -127,7 +127,7 @@ void WebSocket::close()
 
     state = WebSocketState::kClosing;
 
-    auto sd_req = new uv_shutdown_t{};
+    uv_shutdown_t* sd_req = new uv_shutdown_t{};
     sd_req->data = this;
 
     if (int res = uv_shutdown(sd_req, (uv_stream_t*)socket, on_shutdown)) {
@@ -173,7 +173,7 @@ void WebSocket::send_http_request(std::string path,
 
 void WebSocket::send_raw(char * str, size_t len)
 {
-    auto write_req = new uv_write_t{};
+    uv_write_t* write_req = new uv_write_t{};
     write_req->data = this;
 
     uv_buf_t bufs[1];
@@ -187,7 +187,7 @@ void WebSocket::send_raw(char * str, size_t len)
 
 void WebSocket::on_write(uv_write_t * req, int status)
 {
-    auto _this = (WebSocket*)req->data;
+    WebSocket* _this = (WebSocket*)req->data;
 
     // if (status) {
     //     _this->close();
@@ -198,7 +198,7 @@ void WebSocket::on_write(uv_write_t * req, int status)
 
 void WebSocket::on_handle_close(uv_handle_t * handle)
 {
-    auto _this = (WebSocket*)handle->data;
+    WebSocket* _this = (WebSocket*)handle->data;
     _this->state = WebSocketState::kClosed;
     delete handle;
     _this->socket = nullptr;
@@ -216,7 +216,7 @@ void WebSocket::handle_packet(char * buf, size_t len)
 
 size_t WebSocket::decode_frame(char * buf, size_t len)
 {
-    auto frame = WebSocketExtractFrameHeader(buf, len);
+    WebSocketFrame frame = WebSocketExtractFrameHeader(buf, len);
     if (!frame.payload_length || frame.payload_length > len)
         return 0;
 
