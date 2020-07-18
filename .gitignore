@@ -1,3 +1,4 @@
 build
 net-master-websockets*
 settings.json
+jsoncpp

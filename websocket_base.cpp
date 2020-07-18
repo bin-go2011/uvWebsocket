@@ -1,4 +1,5 @@
 #include "websocket_base.hpp"
+#include <iostream>
 
 static uint8_t const BHB0_OPCODE = 0x0F;
 static uint8_t const BHB0_FIN = 0x80;
@@ -246,5 +247,7 @@ void WebSocket::send(const char* buf, size_t length, WebSocketOpcode op)
 
 void WebSocket::send(std::string message, WebSocketOpcode op)
 {
+    std::cout << "Sent: \n" << message << std::endl;
+
     send(message.c_str(), message.size(), op);
 }

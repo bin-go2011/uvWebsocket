@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory(libuv)
+add_subdirectory(jsoncpp)
 
 add_library(http_parser
     http-parser/http_parser.c
